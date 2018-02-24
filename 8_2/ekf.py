@@ -11,6 +11,7 @@ plt.rcParams['font.family'] = 'IPAPGothic'
 import numpy as np
 from numpy.random import multivariate_normal
 from numpy.linalg import norm
+from scipy.optimize import minimize
 
 
 class EKF():
@@ -87,8 +88,20 @@ class EKF():
         self.variance = new_variance
         return new_mu, new_variance
 
+    @classmethod
+    def simple_estimation(cls, y):
+        """ simple estimation not using kalman filter
 
-def makefig(x, esti):
+        :param y:observation data
+        :return:estimated coordinate
+        """
+        func = lambda coord: norm(EKF.getdistance(coord) - y)
+        x0 = np.array([0, 0])
+        res = minimize(func, x0, method='Powell')
+        return res.x
+
+
+def makefig(x, esti, simp):
     """make figure
 
     :param x: np array
@@ -96,24 +109,26 @@ def makefig(x, esti):
     fig = plt.figure()
     ax = fig.add_subplot(1, 1, 1)
     ax.set_xlabel("x")
-    ax.set_xlim(0,100)
+    ax.set_xlim(0, 220)
     ax.set_ylabel("y")
-    ax.set_ylim(0,100)
-    ax.plot(x[:, 0], x[:, 1],label = "true course")
-    ax.plot(esti[:, 0], esti[:, 1],label = "estimation")
+    ax.set_ylim(0, 220)
+    ax.scatter(x[:, 0], x[:, 1], label="true course")
+    ax.scatter(esti[:, 0], esti[:, 1], label="EKF")
+    ax.scatter(simp[:, 0], simp[:, 1], label="simple estimation")
     plt.legend()
     plt.show()
 
 
 def main():
     q = np.array([[3, 0], [0, 3]])
-    r = np.array([[10, 0, 0], [0, 10, 0], [0, 0, 10]])
+    r = np.array([[20, 10, 10], [10, 20, 10], [10, 10, 20]])
     filter = EKF(q, r)
-    T = 25  # sec
+    T = 100  # sec
     coord = np.array([0, 0])
     coords = [coord]
     estimation = [coord]
-    for i in range(40):
+    simple_estimation = [coord]
+    for i in range(T):
         coord = coord + EKF.u + multivariate_normal([0, 0], filter.q)
         coords.append(coord)
         y = EKF.getdistance(coord) + multivariate_normal([0, 0, 0], r)
@@ -121,7 +136,11 @@ def main():
         filter.prediction()
         mu, var = filter.update(y)
         estimation.append(mu)
-    makefig(np.array(coords), np.array(estimation))
+        # Simple Estimation
+        simple_est = EKF.simple_estimation(y)
+        simple_estimation.append(simple_est)
+
+    makefig(np.array(coords), np.array(estimation), np.array(simple_estimation))
 
 
 if __name__ == '__main__':
