@@ -68,8 +68,9 @@ class EKF():
         """
         A = np.array([[1, 0], [0, 1]])
         B = 1
+        Q = self.q
         new_mu = A @ self.mu + B * EKF.u
-        new_variance = A @ self.variance @ A.T + self.q
+        new_variance = A @ self.variance @ A.T + Q
         self.mu = new_mu
         self.variance = new_variance
         return new_mu, new_variance
