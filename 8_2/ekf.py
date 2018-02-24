@@ -71,10 +71,13 @@ class EKF():
         A = np.array([[1, 0], [0, 1]])
         B = 1
         Q = self.q
+        V = self.variance
         new_mu = A @ self.mu + B * EKF.u
-        new_variance = A @ self.variance @ A.T + Q
+        new_variance = A @ V @ A.T + Q
         self.mu = new_mu
         self.variance = new_variance
+        if not isPSD(new_variance):
+            print("not psd in prediction")
         return new_mu, new_variance
 
     def update(self, y):
@@ -88,9 +91,11 @@ class EKF():
         R = self.r
         K = V @ (C.T) @ np.linalg.inv(C @ V @ (C.T) + R)  # Kalman Gain
         new_mu = self.mu + K @ (y - EKF.getdistance(self.mu))
-        new_variance = (1 - K @ C) @ self.variance
+        new_variance = (1 - K @ C) @ V
         self.mu = new_mu
         self.variance = new_variance
+        if not isPSD(new_variance):
+            print("not psd in update")
         return new_mu, new_variance
 
     @classmethod
@@ -160,34 +165,28 @@ def makefig2(x, esti, var):
         eigen_value, eigen_vector = eigh(var[i], check_finite=True)  # eigen value and eigen vector
         eigen_values.append(eigen_value)
         eigen_vectors.append(eigen_vector)
-        print("value", eigen_value)
-        print(eigen_vector)
-        # print("vector", eigen_vectors)
 
     eigen_vectors_arranged = [[[eigen_vectors[i][0][j], eigen_vectors[i][1][j]]
                                for j in range(2)] for i in range(len(var))]
-    print("eigen_values", eigen_values)
-    ax_len = np.sqrt(5.991 * np.array(eigen_values))
+    #print("eigen_values", eigen_values)
+    chi = 9.21
+    ax_len = np.sqrt(chi * np.array(eigen_values))
     print(ax_len)
-    tilt = np.rad2deg([atan2(eigen_vectors_arranged[i][0][1], eigen_vectors_arranged[i][0][0])
-                       if ax_len[i, 0] > ax_len[i, 1] else
-                       atan2(eigen_vectors_arranged[i][1][1], eigen_vectors_arranged[i][1][0])
+    tilt = np.rad2deg([atan2(eigen_vectors_arranged[i][1][1], eigen_vectors_arranged[i][1][0])
                        for i in range(len(var))])
-    larger_ax = lambda j: ax_len[j, 0] if ax_len[j, 0] > ax_len[j, 1] else ax_len[j, 1]
-    smaller_ax = lambda j: ax_len[j, 0] if ax_len[j, 0] < ax_len[j, 1] else ax_len[j, 1]
     for i in range(len(var)):
-        ell = Ellipse(xy=esti[i, :], width=smaller_ax(i), height=larger_ax(i), angle=tilt[i])
-        ell.set_facecolor('none')
-        ax.add_artist(ell)
-        print(smaller_ax(i))
-
+        if i%2 == 0:
+            print(esti[i, 0],ax_len[i,1],tilt[i])
+            ell = Ellipse(xy=(esti[i,0],esti[i,1]), width=ax_len[i, 0], height=ax_len[i, 1], angle=tilt[i],
+                      color='blue')
+            ax.add_patch(ell)
+            ell.set_facecolor('none')
     plt.legend()
     plt.show()
 
-
 def main():
-    q = np.array([[3, 0], [0, 3]])
-    r = np.array([[20, 10, 10], [10, 20, 10], [10, 10, 20]])
+    q = np.array([[1, 0], [0, 1]])
+    r = np.array([[0.1, 10, 0], [0, 0.1, 0], [0, 0, 0.1]])
     if not isPSD(q):
         print("q is not positive definite")
         exit()
@@ -201,22 +200,18 @@ def main():
     estimation = [coord]
     simple_estimation = [coord]
     variance = []
-    for i in range(10):
+    for i in range(100):
         coord = coord + EKF.u + multivariate_normal([0, 0], filter.q)
         coords.append(coord)
         y = EKF.getdistance(coord) + multivariate_normal([0, 0, 0], filter.r)
         # Extended Kalman Filter
-        filter.prediction()
+        mu, var1 = filter.prediction()
         mu, var = filter.update(y)
-        variance.append(var)
+        variance.append(var1)
         estimation.append(mu)
         # Simple Estimation
         simple_est = EKF.simple_estimation(y)
         simple_estimation.append(simple_est)
-        print("var", var)
-        if not isPSD(np.array(var)):
-            print("error")
-    print("variance", variance)
     makefig2(np.array(coords), np.array(estimation), np.array(variance))
     # makefig1(np.array(coords), np.array(estimation), np.array(simple_estimation))
 
