@@ -13,6 +13,7 @@ from numpy.random import multivariate_normal
 from numpy.linalg import norm
 from scipy.optimize import minimize
 from matplotlib.patches import Ellipse
+from math import atan2
 
 
 class EKF():
@@ -138,8 +139,32 @@ def makefig2(x, esti, var):
     ax.set_ylim(0, 220)
     ax.scatter(x[:, 0], x[:, 1], s=5, label="true course")
     ax.scatter(esti[:, 0], esti[:, 1], s=5, label="EKF")
-    eigen = [np.linalg.eig(var[i]) for i in range(len(var))] # eigen value and eigen vector
-    print(eigen)
+    eigen_vectors = []
+    eigen_values = []
+    for i in range(len(var)):
+        eigen_value, eigen_vector = np.linalg.eig(var[i])  # eigen value and eigen vector
+        eigen_values.append(eigen_value)
+        eigen_vectors.append(eigen_vector)
+        # print("value", eigen_value)
+        # print("vector", eigen_vectors)
+
+    eigen_vectors_arranged = [[[eigen_vectors[i][0][j], eigen_vectors[i][1][j]]
+                               for j in range(2)] for i in range(len(var))]
+    print(eigen_values)
+    ax_len = np.sqrt(5.991 * np.array(eigen_values))
+    print(ax_len)
+    tilt = np.rad2deg([atan2(eigen_vectors_arranged[i][0][1], eigen_vectors_arranged[i][0][0])
+                       if ax_len[i, 0] > ax_len[i, 1] else
+                       atan2(eigen_vectors_arranged[i][1][1], eigen_vectors_arranged[i][1][0])
+                       for i in range(len(var))])
+    larger_ax = lambda j: ax_len[j, 0] if ax_len[j, 0] > ax_len[j, 1] else ax_len[j, 1]
+    smaller_ax = lambda j: ax_len[j, 0] if ax_len[j, 0] < ax_len[j, 1] else ax_len[j, 1]
+    for i in range(len(var)):
+        ell = Ellipse(xy=esti[i,:], width=smaller_ax(i), height=larger_ax(i), angle=tilt[i])
+        ell.set_facecolor('none')
+        ax.add_artist(ell)
+        print(smaller_ax(i))
+
     plt.legend()
     plt.show()
 
@@ -154,7 +179,7 @@ def main():
     estimation = [coord]
     simple_estimation = [coord]
     variance = []
-    for i in range(1):
+    for i in range(10):
         coord = coord + EKF.u + multivariate_normal([0, 0], filter.q)
         coords.append(coord)
         y = EKF.getdistance(coord) + multivariate_normal([0, 0, 0], r)
@@ -166,7 +191,8 @@ def main():
         # Simple Estimation
         simple_est = EKF.simple_estimation(y)
         simple_estimation.append(simple_est)
-    makefig2(np.array(coords), np.array(estimation), np.array(variance))
+    print(variance)
+    # makefig2(np.array(coords), np.array(estimation), np.array(variance))
     # makefig1(np.array(coords), np.array(estimation), np.array(simple_estimation))
 
 
