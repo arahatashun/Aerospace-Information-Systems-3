@@ -12,6 +12,7 @@ import numpy as np
 from numpy.random import multivariate_normal
 from numpy.linalg import norm
 from scipy.optimize import minimize
+from matplotlib.patches import Ellipse
 
 
 class EKF():
@@ -101,10 +102,12 @@ class EKF():
         return res.x
 
 
-def makefig(x, esti, simp):
-    """make figure
+def makefig1(x, esti, simp):
+    """make figure comparing simple algorithm and extended karman filter
 
-    :param x: np array
+    :param x: true coordinate
+    :param esti: ekf
+    :param simp:simple algorithm
     """
     fig = plt.figure()
     ax = fig.add_subplot(1, 1, 1)
@@ -115,6 +118,28 @@ def makefig(x, esti, simp):
     ax.scatter(x[:, 0], x[:, 1], label="true course")
     ax.scatter(esti[:, 0], esti[:, 1], label="EKF")
     ax.scatter(simp[:, 0], simp[:, 1], label="simple estimation")
+    plt.legend()
+    plt.savefig("simple.pgf")
+
+
+def makefig2(x, esti, var):
+    """ make figure including error ellipse
+
+    :param x:
+    :param esti:
+    :param var:
+    :return:
+    """
+    fig = plt.figure()
+    ax = fig.add_subplot(1, 1, 1)
+    ax.set_xlabel("x")
+    ax.set_xlim(0, 220)
+    ax.set_ylabel("y")
+    ax.set_ylim(0, 220)
+    ax.scatter(x[:, 0], x[:, 1], s=5, label="true course")
+    ax.scatter(esti[:, 0], esti[:, 1], s=5, label="EKF")
+    eigen = [np.linalg.eig(var[i]) for i in range(len(var))] # eigen value and eigen vector
+    print(eigen)
     plt.legend()
     plt.show()
 
@@ -128,19 +153,21 @@ def main():
     coords = [coord]
     estimation = [coord]
     simple_estimation = [coord]
-    for i in range(T):
+    variance = []
+    for i in range(1):
         coord = coord + EKF.u + multivariate_normal([0, 0], filter.q)
         coords.append(coord)
         y = EKF.getdistance(coord) + multivariate_normal([0, 0, 0], r)
         # Extended Kalman Filter
         filter.prediction()
         mu, var = filter.update(y)
+        variance.append(var)
         estimation.append(mu)
         # Simple Estimation
         simple_est = EKF.simple_estimation(y)
         simple_estimation.append(simple_est)
-
-    makefig(np.array(coords), np.array(estimation), np.array(simple_estimation))
+    makefig2(np.array(coords), np.array(estimation), np.array(variance))
+    # makefig1(np.array(coords), np.array(estimation), np.array(simple_estimation))
 
 
 if __name__ == '__main__':
