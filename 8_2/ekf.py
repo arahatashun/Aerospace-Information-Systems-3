@@ -168,25 +168,24 @@ def makefig2(x, esti, var):
 
     eigen_vectors_arranged = [[[eigen_vectors[i][0][j], eigen_vectors[i][1][j]]
                                for j in range(2)] for i in range(len(var))]
-    #print("eigen_values", eigen_values)
     chi = 9.21
     ax_len = np.sqrt(chi * np.array(eigen_values))
-    print(ax_len)
     tilt = np.rad2deg([atan2(eigen_vectors_arranged[i][1][1], eigen_vectors_arranged[i][1][0])
                        for i in range(len(var))])
     for i in range(len(var)):
-        if i%2 == 0:
-            print(esti[i, 0],ax_len[i,1],tilt[i])
-            ell = Ellipse(xy=(esti[i,0],esti[i,1]), width=ax_len[i, 0], height=ax_len[i, 1], angle=tilt[i],
-                      color='blue')
+        if i % 2 == 0:
+            ell = Ellipse(xy=(esti[i, 0], esti[i, 1]), width=ax_len[i, 0], height=ax_len[i, 1], angle=tilt[i],
+                          color='blue')
             ax.add_patch(ell)
             ell.set_facecolor('none')
     plt.legend()
-    plt.show()
+    plt.savefig("ellipse.pgf")
+    # plt.show()
+
 
 def main():
-    q = np.array([[1, 0], [0, 1]])
-    r = np.array([[0.1, 10, 0], [0, 0.1, 0], [0, 0, 0.1]])
+    q = np.array([[3, 0], [0, 3]])
+    r = np.array([[1, 0, 0], [0, 1, 0], [0, 0, 1]])
     if not isPSD(q):
         print("q is not positive definite")
         exit()
