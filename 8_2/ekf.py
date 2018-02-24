@@ -17,6 +17,7 @@ from math import atan2
 from scipy.linalg import eigh
 from sys import exit
 
+
 class EKF():
     """Extended Kalman Filter"""
     observer_1 = np.array([0, 100])
@@ -104,6 +105,7 @@ class EKF():
         res = minimize(func, x0, method='Powell')
         return res.x
 
+
 def isPSD(A, tol=1e-8):
     """ check if A is positive semi definite 
     
@@ -111,9 +113,10 @@ def isPSD(A, tol=1e-8):
     :param A:  
     :return: 
     """
-    
-    E,V = eigh(A)
+
+    E, V = eigh(A)
     return np.all(E > -tol)
+
 
 def makefig1(x, esti, simp):
     """make figure comparing simple algorithm and extended karman filter
@@ -154,7 +157,7 @@ def makefig2(x, esti, var):
     eigen_vectors = []
     eigen_values = []
     for i in range(len(var)):
-        eigen_value, eigen_vector = eigh(var[i],check_finite=True)  # eigen value and eigen vector
+        eigen_value, eigen_vector = eigh(var[i], check_finite=True)  # eigen value and eigen vector
         eigen_values.append(eigen_value)
         eigen_vectors.append(eigen_vector)
         print("value", eigen_value)
@@ -210,9 +213,10 @@ def main():
         # Simple Estimation
         simple_est = EKF.simple_estimation(y)
         simple_estimation.append(simple_est)
-        if not isPSD(variance):
+        print("var", var)
+        if not isPSD(np.array(var)):
             print("error")
-    print("variance",variance)
+    print("variance", variance)
     makefig2(np.array(coords), np.array(estimation), np.array(variance))
     # makefig1(np.array(coords), np.array(estimation), np.array(simple_estimation))
 
