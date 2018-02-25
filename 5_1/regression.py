@@ -94,12 +94,12 @@ def plot_poly_fit(years, prices, order):
     ax.set_title("order" + str(order) + " regression")
     sum_squared_error = sum([(prices[i] - np.polyval(coefficient, years[i])) ** 2 for i in range(len(years))])
     AIC = aic(sum_squared_error, len(years), order)
-    BIC = bic(sum_squared_error,len(years), order)
-    print("AIC&",AIC,"\\")
-    print("BIC&",BIC,"\\")
+    BIC = bic(sum_squared_error, len(years), order)
+    print("AIC&", AIC, "\\")
+    print("BIC&", BIC, "\\")
     print(expression_string)
-    #plt.show()
-    plt.savefig(str(order)+"_poly.pgf")
+    # plt.show()
+    plt.savefig(str(order) + "_poly.pgf")
     return sum_squared_error
 
 
@@ -117,7 +117,7 @@ def calc_loo(years, prices, n):
         tmp_prices.pop(i)
         coefficient = np.polyfit(tmp_years, tmp_prices, n)
         squared_error += (prices[i] - np.polyval(coefficient, years[i])) ** 2 / len(prices)
-    print("LOO&",squared_error,"\\")
+    print("LOO&", squared_error, "\\")
     return squared_error
 
 
@@ -137,5 +137,5 @@ if __name__ == '__main__':
     years, prices = read_data()
     n = int(input("order"))
     calc_loo(years, prices, n)
-    plot_poly_fit(years,prices,n)
+    plot_poly_fit(years, prices, n)
     # plot_figure(years, prices)
