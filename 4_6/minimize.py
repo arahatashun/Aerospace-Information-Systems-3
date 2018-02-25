@@ -93,7 +93,7 @@ class EM_algorithm():
     def E_step(self, x):
         """E step calculate responsibility
 
-        :param x:
+        :param x: alpha_f, mu_F, mu_M, sigma^2_F, sigma^2_M
         :return:responsibility_array
         """
         respo = np.array([[(lambda y: x[0] if y == 0 else 1 - x[0])(j)
@@ -106,7 +106,7 @@ class EM_algorithm():
     def M_step(self, x, respo):
         """ Maximum likelihood estimation
 
-        :param x:
+        :param x:alpha_f, mu_F, mu_M, sigma^2_F, sigma^2_M
         :param respo:
         :return: x_new
         """
@@ -114,15 +114,15 @@ class EM_algorithm():
         N_M = sum(respo[:, 1])
         mu_F_new = 1 / N_F * sum(respo[:, 0] * data)
         mu_M_new = 1 / N_M * sum(respo[:, 1] * data)
-        sigma_F_new = 1 / N_F * sum(respo[:, 0] * ((data - mu_F_new) ** 2))
-        sigma_M_new = 1 / N_M * sum(respo[:, 1] * ((data - mu_M_new) ** 2))
+        Sigma_F_new = 1 / N_F * sum(respo[:, 0] * ((data - mu_F_new) ** 2))
+        Sigma_M_new = 1 / N_M * sum(respo[:, 1] * ((data - mu_M_new) ** 2))
         pi_F = 1 / len(data) * sum(respo[:, 0])
-        x_new = [pi_F, mu_F_new, mu_M_new, sigma_F_new, sigma_M_new]
+        x_new = [pi_F, mu_F_new, mu_M_new, Sigma_F_new, Sigma_M_new]
         self.x = x_new
 
     def iterate(self):
         """ iterate
-        :return:
+        :return:negative log likelihood
         """
         respo = self.E_step(self.x)
         self.M_step(self.x, respo)
@@ -144,9 +144,12 @@ class EM_algorithm():
 def main():
     x = [0.5, 14, 30, 20, 160]
     em = EM_algorithm(x)
-    result = [em.iterate() for i in range(1000)]
+    for i in range(1000):
+        em.iterate()
+    print(em.x)
     plot(em.x)
     em.plot()
+
 
 if __name__ == '__main__':
     main()
