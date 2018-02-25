@@ -77,7 +77,8 @@ class EKF():
         self.mu = new_mu
         self.variance = new_variance
         if not isPSD(new_variance):
-            print("not psd in prediction")
+            pass
+            # print("not psd in prediction")
         return new_mu, new_variance
 
     def update(self, y):
@@ -95,7 +96,8 @@ class EKF():
         self.mu = new_mu
         self.variance = new_variance
         if not isPSD(new_variance):
-            print("not psd in update")
+            pass
+            # print("not psd in update")
         return new_mu, new_variance
 
     @classmethod
@@ -136,11 +138,12 @@ def makefig1(x, esti, simp):
     ax.set_xlim(0, 220)
     ax.set_ylabel("y")
     ax.set_ylim(0, 220)
-    ax.scatter(x[:, 0], x[:, 1], label="true course")
-    ax.scatter(esti[:, 0], esti[:, 1], label="EKF")
-    ax.scatter(simp[:, 0], simp[:, 1], label="simple estimation")
+    ax.scatter(x[:, 0], x[:, 1], s=5, label="true course")
+    ax.scatter(esti[:, 0], esti[:, 1], s=5, label="EKF")
+    ax.scatter(simp[:, 0], simp[:, 1], s=5, label="simple estimation")
     plt.legend()
-    plt.savefig("simple.pgf")
+    # plt.savefig("simple.pgf")
+    plt.show()
 
 
 def makefig2(x, esti, var):
@@ -179,13 +182,14 @@ def makefig2(x, esti, var):
             ax.add_patch(ell)
             ell.set_facecolor('none')
     plt.legend()
-    plt.savefig("ellipse.pgf")
-    # plt.show()
+    # plt.savefig("ellipse.pgf")
+    plt.show()
 
 
 def main():
-    q = np.array([[3, 0], [0, 3]])
-    r = np.array([[1, 0, 0], [0, 1, 0], [0, 0, 1]])
+    q = np.array([[1, 0], [0, 1]])
+    r = np.array([[20, 10, 0], [10, 20, 0], [0, 0, 20]])
+    r_prime = np.array([[25, 0, 10], [0, 25, 0], [10, 0, 15]])
     if not isPSD(q):
         print("q is not positive definite")
         exit()
@@ -203,6 +207,7 @@ def main():
         coord = coord + EKF.u + multivariate_normal([0, 0], filter.q)
         coords.append(coord)
         y = EKF.getdistance(coord) + multivariate_normal([0, 0, 0], filter.r)
+        + multivariate_normal([0,0,0],r_prime)
         # Extended Kalman Filter
         mu, var1 = filter.prediction()
         mu, var = filter.update(y)
@@ -211,8 +216,8 @@ def main():
         # Simple Estimation
         simple_est = EKF.simple_estimation(y)
         simple_estimation.append(simple_est)
-    makefig2(np.array(coords), np.array(estimation), np.array(variance))
-    # makefig1(np.array(coords), np.array(estimation), np.array(simple_estimation))
+    # makefig2(np.array(coords), np.array(estimation), np.array(variance))
+    makefig1(np.array(coords), np.array(estimation), np.array(simple_estimation))
 
 
 if __name__ == '__main__':
