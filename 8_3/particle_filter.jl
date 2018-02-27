@@ -10,7 +10,7 @@ const β=8/3
 const STEPNUM = 10000
 const OBSERVATION = 100
 const STEP = 0.0001
-const PARTICLE_NUM = 5
+const PARTICLE_NUM = 200
 const rng = MersenneTwister(8)
 const STD = 0.1
 const R = [STD 0 0;
@@ -71,9 +71,9 @@ mutable struct ParticleFilter
 end
 
 function initialize_pf()
-    particles = Array{Float64, 2}(3,255)
+    particles = Array{Float64, 2}(3,PARTICLE_NUM)
     for i in 1:PARTICLE_NUM
-        particles[:,i] = [rand_normal(0,STD) for j in 1:3]
+        particles[:,i] = [rand_normal(0.1,STD) for j in 1:3]
     end
     weight = [ 1/PARTICLE_NUM for i in 1:PARTICLE_NUM]
     filter = ParticleFilter(weight, particles)
@@ -90,7 +90,7 @@ end
 function getmean(filter::ParticleFilter)
     μ = [0; 0; 0]
     for i in 1:PARTICLE_NUM
-        μ = filter.particle[:,i] * filter.weight[i]
+        μ += filter.particle[:,i] * filter.weight[i]
     end
     return μ
 end
@@ -100,7 +100,6 @@ function evaluation!(filter::ParticleFilter,observation::Array{Float64,1})
         x = filter.particle[:,i]
         z = x - observation
         exponent = -1/2 * z' * inv(R) * z
-        println(exponent)
         filter.weight[i] = 1/((2π)^(3/2)*(det(R))^(1/2)) * exp(exponent)
     end
     Σp = sum(filter.weight)
@@ -121,7 +120,7 @@ function  main()
         x_true[i+1,:] = x_true[i,:] + runge_kutta(Lorenz,x_true[i,:],STEP)
         predict!(filter)
         pf_estimation[i+1, :] = getmean(filter)
-        if i %100 == 0
+        if i %OBSERVATION == OBSERVATION-1
         x_observe[i+1,:] = x_true[i+1,:] + [rand_normal(0,0.1) for j in 1:3]
         evaluation!(filter,x_observe[i+1,:])
         end
@@ -129,12 +128,23 @@ function  main()
     plot_all(x_true,pf_estimation)
 end
 
-function plot_all(x_true, x_observe)
-    #plot(x_true[1]',x_true[2]',x_true[3]',marker=:circle)
+function plot_all(x_true, x_est)
+    time = [STEP*(j-1) for j in 1:STEPNUM+1]
+    #=
     fig = figure()
     ax = gca(projection="3d")
     ax[:plot](x_true[:,1],x_true[:,2],x_true[:,3])
-    ax[:plot](x_observe[:,1],x_observe[:,2],x_observe[:,3])
+    ax[:plot](x_est[:,1],x_est[:,2],x_est[:,3])
+    PyPlot.plt[:show]()
+    =#
+    fig2 = figure()
+    ax =fig2[:add_subplot](2,1,1)
+    ax[:plot](time,x_true[:,1],label="true")
+    ax[:plot](time,x_est[:,1],label="particle filter")
+    legend(loc="right")
+    ax =fig2[:add_subplot](2,1,2)
+    ax[:plot](time,x_true[:,1]-x_est[:,1],label="error")
+    legend(loc="right")
     PyPlot.plt[:show]()
 end
 
