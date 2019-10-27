@@ -1,5 +1,5 @@
 # system_3
-code for lecture Aerospace Information Systems 3
+Code for lecture Aerospace Information Systems 3
 
 ## 8.2 Extended Kalman Filter
 <p align="center">
