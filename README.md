@@ -1,7 +1,7 @@
 # system_3
 code for lecture Aerospace Information Systems 3
 
-## Extended kalman filter
+## Extended Kalman Filter
 <p align="center">
   <img src = "https://github.com/arahatashun/system_3/blob/master/8_2/ekf.png" width="600" height="500" >
 </p>
